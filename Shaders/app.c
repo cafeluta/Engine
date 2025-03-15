@@ -5,8 +5,7 @@
 
 #include "lib/linmath.h"
 #include "lib/callback.h"
-#include "lib/infolog.h"
-#include "lib/ssc.h"
+#include "include/shader.h"
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -14,9 +13,10 @@
 
 // TRIANGLE 
 float vertices[] = {
-    -0.25f, 0.0f, 0.0f,
-    0.0f, 0.5f, 0.0f,
-    0.25f, 0.0f, 0.0f
+    // colors           rgb
+    -0.25f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+    0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f
 };
 
 int main() {
@@ -50,48 +50,60 @@ int main() {
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
 
-    // VERTEX SHADER
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    checkIfCompileWasSuccessful(&vertexShader, "VERTEX");
+    // // VERTEX SHADER
+    // GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    // glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    // glCompileShader(vertexShader);
+    // checkIfCompileWasSuccessful(&vertexShader, "VERTEX");
 
-    // FRAGMENT SHADER
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    checkIfCompileWasSuccessful(&fragmentShader, "FRAGMENT");
+    // // FRAGMENT SHADER
+    // GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    // glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    // glCompileShader(fragmentShader);
+    // checkIfCompileWasSuccessful(&fragmentShader, "FRAGMENT");
 
-    // SHADER PROGRAM
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    checkIfCompileWasSuccessful(&shaderProgram, "PROGRAM");
+    // // SHADER PROGRAM
+    // GLuint shaderProgram = glCreateProgram();
+    // glAttachShader(shaderProgram, vertexShader);
+    // glAttachShader(shaderProgram, fragmentShader);
+    // glLinkProgram(shaderProgram);
+    // checkIfCompileWasSuccessful(&shaderProgram, "PROGRAM");
 
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    // glDeleteShader(vertexShader);
+    // glDeleteShader(fragmentShader);
+
+    Shader shader;
+    Shader_init(&shader, "ssc/vertex_shader.glsl", "ssc/fragment_shader.glsl");
+    Shader_use(&shader);
 
     // LINKING
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexArrayAttrib(VAO, 0);
+
+    // POSITION ATTRIBUTE
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);  // stride = distance between elements
+    glEnableVertexAttribArray(0);  // position has location = 0
+
+    // COLOR ATTRIBUTE
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);  // color has location = 1
+
 
     // LOOP
     while (!glfwWindowShouldClose(window)) {
         glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shaderProgram);        
+        Shader_use(&shader); 
 
         // Gradually changing color over time
         float timeValue = glfwGetTime();
         float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
         // we get the location of ourColor from fragmentShaderSource
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        // int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+        // glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        Shader_setFloat4(&shader, "ourColor", 0.0f, greenValue, 0.0f, 1.0f);
 
         glBindVertexArray(VAO);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);

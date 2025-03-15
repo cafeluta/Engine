@@ -1,5 +1,5 @@
 # Numele fișierului sursă și al fișierului executabil
-SRC = app.c
+SRC = app.c src/shader.c
 EXEC = app
 
 # Directorul de includere pentru GLAD
