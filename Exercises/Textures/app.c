@@ -15,16 +15,16 @@
 // CONTAINER 
 float vertices[] = {
     // positions        // rgb              // texPos
-    0.5f, 0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,  // top right
-    0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   1.0f, 0.0f,  // bottom right
-    -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,   0.0f, 0.0f,  // bottom left
-    -0.5f, 0.5f, 0.0f,  1.0f, 1.0f, 0.0f,   0.0f, 1.0f   // top left
+    0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,  1.0f, 1.0f, // top right
+    0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,  1.0f, 0.0f, // bottom right
+    -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f, // bottom left
+    -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f  // top left 
 };
 
 unsigned int indices[] = {
     0, 1, 3,  // first triangle
     1, 2, 3   // second triangle
-}
+};
 
 // TEXTURE
 // float texCoords[] = {
@@ -32,6 +32,27 @@ unsigned int indices[] = {
 //     1.0f, 0.0f,
 //     0.5f, 1.0f
 // };
+
+float opacity = 1.0f;
+
+// FUNCTIONS
+void processInput(GLFWwindow* window, Shader* shader) {
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        opacity += 0.001f;
+        if (opacity > 1.0f) {
+            opacity = 1.0f;
+        }
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        opacity -= 0.001f;
+        if (opacity < 0.0f) {
+            opacity = 0.0f;
+        }
+    }
+
+    Shader_setFloat(shader, "opacity", opacity);
+}
 
 int main() {
     if (!glfwInit()) {
@@ -47,6 +68,7 @@ int main() {
         exit(EXIT_FAILURE);
     }
     glfwSetKeyCallback(window, key_callback);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwMakeContextCurrent(window);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -56,13 +78,13 @@ int main() {
 
     // BUFFERS
     GLuint VAO;
-    glCreateVertexArrays(1, &VAO);
+    glGenVertexArrays(1, &VAO);
 
     GLuint VBO;
-    glCreateBuffers(1, &VBO);
+    glGenBuffers(1, &VBO);
 
     GLuint EBO;
-    glCreateBuffers(1, &EBO);
+    glGenBuffers(1, &EBO);
 
     // SHADER PROGRAM
     Shader shader;
@@ -90,13 +112,15 @@ int main() {
     glEnableVertexAttribArray(2);
 
     // TEXTURE
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    GLuint texture1, texture2;
+
+    // texture 1
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
 
     // TEXTURE WRAPPING
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);  // x axis
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);  // y axis
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  // x axis
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);  // y axis
 
     // TEXTURE FILTERING
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // when zoomed out its smooth
@@ -104,6 +128,7 @@ int main() {
 
     // LOAD IMAGE
     int width, height, nrChannels;  // nrChannels = 3 (rgb) / 4 (rgba)
+    stbi_set_flip_vertically_on_load(GL_TRUE);
     unsigned char* data = stbi_load("img/container.jpg", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -114,9 +139,37 @@ int main() {
     }
     stbi_image_free(data);
 
+    // texture 2
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    data = stbi_load("img/awesomeface.png", &width, &height, &nrChannels, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    } else {
+        printf("Failed to load texture!\n");
+        return -1;
+    }
+    
+    stbi_image_free(data);
+
+    Shader_use(&shader);
+    Shader_setInt(&shader, "texture1", 0);  // sets the texture1 to GL_TEXTURE0
+    Shader_setInt(&shader, "texture2", 1);  // sets the texture2 to GL_TEXTURE1
+
     while (!glfwWindowShouldClose(window)) {
-        glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.39f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // We procces the info see the function
+        processInput(window, &shader);
 
         Shader_use(&shader);
 
@@ -124,7 +177,14 @@ int main() {
         float redValue = (sin(timeValue) / 2.0f) + 0.5f;
         Shader_setFloat4(&shader, "ourColor", redValue, 0.0f, 0.0f, 1.0f);
 
-        glBindTexture(GL_TEXTURE_2D, texture);
+        // Container texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+
+        // Face texture
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
+
         glBindVertexArray(VAO);
         // glBindBuffer(GL_ARRAY_BUFFER, VBO);
         // glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -133,6 +193,10 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+    glDeleteVertexArrays(1, &VAO);
 
     glfwDestroyWindow(window);
     glfwTerminate();
