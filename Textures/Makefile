@@ -1,18 +1,21 @@
 # Numele fișierului sursă și al fișierului executabil
-SRC = app.c
+SRC = app.c src/shader.c src/stb_image.c
 EXEC = app
 
 # Directorul de includere pentru GLAD
-GLAD_DIR = glad/include
+GLAD_DIR = ../glad/include
 
 # Directorul pentru sursa GLAD
-GLAD_SRC = glad/src/glad.c
+GLAD_SRC = ../glad/src/glad.c
+
+# Directorul pentru lib custom
+LIB_DIR = /home/cafea/Programare/C_Projects/Engine/Triangle/lib
 
 # Linker flags pentru biblioteci
 LIBS = -lglfw -ldl -lm
 
 # Căi de includere
-INCLUDES = -I$(GLAD_DIR) -I/usr/include
+INCLUDES = -I$(GLAD_DIR) -I/usr/include -I$(LIB_DIR)
 
 # Compilatorul și opțiunile de compilare
 CC = gcc

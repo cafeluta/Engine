@@ -50,28 +50,6 @@ int main() {
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
 
-    // // VERTEX SHADER
-    // GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    // glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    // glCompileShader(vertexShader);
-    // checkIfCompileWasSuccessful(&vertexShader, "VERTEX");
-
-    // // FRAGMENT SHADER
-    // GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    // glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    // glCompileShader(fragmentShader);
-    // checkIfCompileWasSuccessful(&fragmentShader, "FRAGMENT");
-
-    // // SHADER PROGRAM
-    // GLuint shaderProgram = glCreateProgram();
-    // glAttachShader(shaderProgram, vertexShader);
-    // glAttachShader(shaderProgram, fragmentShader);
-    // glLinkProgram(shaderProgram);
-    // checkIfCompileWasSuccessful(&shaderProgram, "PROGRAM");
-
-    // glDeleteShader(vertexShader);
-    // glDeleteShader(fragmentShader);
-
     Shader shader;
     Shader_init(&shader, "ssc/vertex_shader.glsl", "ssc/fragment_shader.glsl");
     Shader_use(&shader);
