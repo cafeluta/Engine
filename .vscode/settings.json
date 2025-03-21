@@ -4,6 +4,7 @@
         "optional": "c",
         "__locale": "c",
         "algorithm": "c",
-        "linmath.h": "c"
+        "linmath.h": "c",
+        "sstream": "c"
     }
 }
