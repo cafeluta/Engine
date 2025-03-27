@@ -6,5 +6,9 @@
         "algorithm": "c",
         "linmath.h": "c",
         "sstream": "c"
-    }
+    },
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",
+        "/usr/include/glm"
+    ]
 }

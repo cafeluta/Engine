@@ -1,3 +1,8 @@
+/*
+    Name: Ionita Sebastian-Marius ☕
+    University: ACS UPB
+*/
+
 #define GLFW_INCLUDE_NONE
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -91,6 +96,17 @@ const char* fragmentShaderPath = "ssc/fragment_shader.glsl";
 const char* imageContainer = "img/container.jpg";
 const char* imageAwesomeFace = "img/awesomeface.png";
 
+// CAMERA
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 20.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+// TIMING 
+float deltaTime = 0.0f; // the time between current frame and last frame
+float lastFrame = 0.0f;
+
+void processInput(GLFWwindow* window);
+
 int main() {
     if (!glfwInit()) {
         // Initialization failed
@@ -123,10 +139,6 @@ int main() {
     GLuint VBO;
     glGenBuffers(1, &VBO);
 
-    // GLuint EBO;
-    // glGenBuffers(1, &EBO);
-
-
     // SHADER
     Shader shader;
     Shader_init(&shader, vertexShaderPath, fragmentShaderPath);
@@ -136,8 +148,6 @@ int main() {
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // POSITION ATTRIBUTE
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
@@ -203,8 +213,36 @@ int main() {
     Shader_setInt(&shader, "texture1", 0);
     Shader_setInt(&shader, "texture2", 1);
 
+    // Camera
+    // this is for fps like games
+    // glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
+    // glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);  // the camera points at the intersection of all axis
+    // glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+    // /*
+    //     normalize = the vector sits between [0,1]
+    //     the directions is the vector from (0,0,0) to (0,0,3)
+    // */
+    // glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);  // y axis
+    // glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+    // /*
+    //     the cross product of 2 vectors result in a vector perpendicular on both of them
+    //     cross(up, cameraDirection) = cross(y-axis, z-axis) = x-axis
+    // */
+    // glm::vec3 cameraUp = glm::normalize(glm::cross(cameraRight, cameraDirection));  // this is the y-axis
+
+    glm::mat4 projection = glm::perspective(glm::radians(75.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 500.0f);  
+    Shader_setMat4(shader.ID, "projection", &projection);
+
+
     // LOOP
     while (!glfwWindowShouldClose(window)) {
+        // for a smoother movement
+        float currentFrame = (float)(glfwGetTime());
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        processInput(window);
+
         glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -217,26 +255,36 @@ int main() {
         Shader_use(&shader);
 
         // GOING 3D
-        glm::mat4 view = glm::mat4(1.0f);
-        glm::mat4 projection = glm::mat4(1.0f);
-
-        view = glm::translate(view, glm::vec3(0.0f, 1.2f, -3.0f));  // we move the plane backwards on the z axis
-        projection = glm::perspective(glm::radians(55.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);  
-
-        // Shader_setMat4(shader.ID, "model", &model);
+        // printf("Pos: %f, %f, %f | Front: %f, %f, %f\n",
+        //     cameraPos.x, cameraPos.y, cameraPos.z,
+        //     cameraFront.x, cameraFront.y, cameraFront.z);
+        // moving the camera ourself with input        
+        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         Shader_setMat4(shader.ID, "view", &view);
-        Shader_setMat4(shader.ID, "projection", &projection);
 
+    //     printf("View Matrix:\n");
+    // for (int i = 0; i < 4; i++) {
+    //     for (int j = 0; j < 4; j++) {
+    //         printf("%f ", view[i][j]);
+    //     }
+    //  }
 
         glBindVertexArray(VAO);
-        for(unsigned int i = 1; i <= 10; i++)
+        for(unsigned int i = 0; i < 10; i++)
         {
+            // rotating and rendering cubes
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, -0.4f));
-            float angle = (i % 3 == 0) ? 20.0f : glfwGetTime() * 25.0f;
+            float angle = 20.0f * i;
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             Shader_setMat4(shader.ID, "model", &model);
+
+            // rotating camera on x and z axis
+            // float radius = 10.0f;
+            // float camX = sin(glfwGetTime()) * radius;
+            // float camZ = cos(glfwGetTime()) * radius;
+            // view = glm::lookAt(glm::vec3(camX, 0.0f, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            // Shader_setMat4(shader.ID, "view", &view);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
@@ -248,8 +296,23 @@ int main() {
     Shader_destroy(&shader);
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    // glDeleteBuffers(1, &EBO);
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }
+
+void processInput(GLFWwindow *window) {
+    float cameraSpeed = 10.5f * deltaTime; // deltaTime pentru mișcare fluidă
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPos += cameraSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPos -= cameraSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    printf("cameraPos.x: %f, cameraPos.y: %f, cameraPos: %f\n", cameraPos.x, cameraPos.y, cameraPos.z);    
+}
+
+
