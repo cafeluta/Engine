@@ -2,7 +2,11 @@
 #define CALLBACK_H
 
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
 #include <stdio.h>
+
+#include "constants.h"
 
 #ifndef CALLBACK_NO_INLINE
 #define CALLBACK_H_FUNC static
@@ -25,4 +29,26 @@
 CALLBACK_H_FUNC void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     // making the app match the new window dimensions
     glViewport(0, 0, width, height);
+}
+
+CALLBACK_H_FUNC void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
+    float xPos = (float)xposIn;
+    float yPos = (float)yposIn;
+
+    if (firstMouse) {
+        lastX = xPos;
+        lastY = yPos;
+        firstMouse =  false;
+    }
+
+    float xOffset = xPos - lastX;
+    float yOffset = lastY - yPos;
+    lastX = xPos;
+    lastY = yPos;
+
+    camera.processMouseMovement(xOffset, yOffset);
+}
+
+CALLBACK_H_FUNC void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    camera.processMouseScroll((float)yoffset);
 }

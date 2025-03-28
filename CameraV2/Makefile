@@ -1,5 +1,5 @@
 # Numele fișierului sursă și al fișierului executabil
-SRC = app.c src/stb_image.c src/constants.cpp
+SRC = app.cpp src/stb_image.c src/constants.cpp
 EXEC = app
 
 # Directorul de includere pentru GLAD
